@@ -3,6 +3,9 @@ import time
 import requests
 from typing import Dict, Any
 
+import google.generativeai as genai
+from openai import OpenAI
+
 class LLMGateway:
     """
     The Gateway deals with the "Help me connect X" problem.
@@ -14,6 +17,25 @@ class LLMGateway:
         self.openai_key = os.getenv("OPENAI_API_KEY")
         self.deepseek_key = os.getenv("DEEPSEEK_API_KEY")
         self.google_key = os.getenv("GOOGLE_API_KEY")
+        
+        # Initialize Clients
+        self.deepseek_client = None
+        if self.deepseek_key:
+            self.deepseek_client = OpenAI(api_key=self.deepseek_key, base_url="https://api.deepseek.com")
+            
+        self.openai_client = None 
+        if self.openai_key:
+             self.openai_client = OpenAI(api_key=self.openai_key)
+             
+        if self.google_key:
+             genai.configure(api_key=self.google_key)
+
+    def get_status(self):
+         return {
+             "openai": "configured" if self.openai_key else "missing_key",
+             "deepseek": "configured" if self.deepseek_key else "missing_key",
+             "google": "configured" if self.google_key else "missing_key"
+         }
         
     def execute(self, route_decision: Dict[str, Any], input_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -63,28 +85,60 @@ class LLMGateway:
         return response
 
     def _call_deepseek(self, text: str):
-        # Mocking or Real Call depending on library
-        # Here we simulate for the MVP export
-        return {
-            "content": f"[DEEPSEEK REASONING] Processed: {text[:20]}...",
-            "model": "deepseek-r1",
-            "cost_estimated": 0.002
-        }
+        if not self.deepseek_client:
+            return {"error": "DeepSeek API Key missing", "content": "Error: Configure DEEPSEEK_API_KEY in Render"}
+            
+        try:
+            response = self.deepseek_client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": text},
+                ],
+                stream=False
+            )
+            return {
+                "content": response.choices[0].message.content,
+                "model": "deepseek-chat",
+                "cost_estimated": 0.002 # DeepSeek is cheap
+            }
+        except Exception as e:
+            return {"error": str(e), "content": "DeepSeek API Error"}
 
     def _call_google(self, text: str):
-        return {
-            "content": f"[GEMINI PRO] Answered: {text[:20]}...",
-            "model": "gemini-pro",
-            "cost_estimated": 0.001
-        }
+        if not self.google_key:
+             return {"error": "Google API Key missing", "content": "Error: Configure GOOGLE_API_KEY in Render"}
+        
+        try:
+            model = genai.GenerativeModel('gemini-pro')
+            response = model.generate_content(text)
+            return {
+                "content": response.text,
+                "model": "gemini-pro",
+                "cost_estimated": 0.001
+            }
+        except Exception as e:
+             return {"error": str(e), "content": "Google API Error"}
 
     def _call_gpt5(self, text: str):
-        return {
-            "content": f"[GPT-5 ANSWER] Perfect response to: {text[:20]}...",
-            "model": "gpt-5-preview",
-            "cost_estimated": 0.025
-        }
+        if not self.openai_client:
+             return {"error": "OpenAI API Key missing", "content": "Error: Configure OPENAI_API_KEY in Render"}
+             
+        try:
+             # Using gpt-4-turbo as proxy for 'gpt-5' or gpt-4o
+             response = self.openai_client.chat.completions.create(
+                model="gpt-4-turbo-preview", 
+                messages=[{"role": "user", "content": text}]
+             )
+             return {
+                "content": response.choices[0].message.content,
+                "model": "gpt-4-turbo",
+                "cost_estimated": 0.03
+             }
+        except Exception as e:
+             return {"error": str(e), "content": "OpenAI API Error"}
         
     def _is_confident(self, result):
         # Placeholder for 'Self-Consistent' logic
+        if "error" in result: return False
         return True

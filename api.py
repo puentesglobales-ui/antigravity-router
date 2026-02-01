@@ -34,7 +34,14 @@ class RouteRequest(BaseModel):
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "version": "v1.frozen"}
+    return {"status": "ok", "version": "v1.prod"}
+
+@app.get("/status")
+def system_status():
+    """
+    Checks connection to LLM Providers
+    """
+    return gateway.get_status()
 
 @app.post("/route")
 def route_traffic(req: RouteRequest):
