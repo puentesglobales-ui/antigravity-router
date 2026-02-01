@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: antigravity-router-v1
+    runtime: docker
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: 8000
+    # Optional: Secrets for Gateway
+    # - key: OPENAI_API_KEY
+    #   sync: false
+    # - key: DEEPSEEK_API_KEY
+    #   sync: false
+    # - key: GOOGLE_API_KEY
+    #   sync: false

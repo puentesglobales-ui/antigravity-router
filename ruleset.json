@@ -1,0 +1,151 @@
+{
+    "version": "1.0.0",
+    "meta": {
+        "description": "Antigravity Ruleset v1 - Production Hardened",
+        "last_updated": "2026-01-31"
+    },
+    "financial_guardrails": {
+        "max_cost_per_request_usd": 0.10,
+        "timeouts_ms": {
+            "voice": 2000,
+            "text": 5000,
+            "whatsapp": 5000
+        },
+        "default_fallback_provider": "ANTIGRAVITY"
+    },
+    "thresholds": {
+        "complexity": {
+            "low": 20,
+            "medium": 60,
+            "high": 80
+        },
+        "risk": {
+            "low": 20,
+            "medium": 60,
+            "high": 80
+        }
+    },
+    "intents": {
+        "static": [
+            {
+                "name": "greeting",
+                "patterns": [
+                    "^(hola|h+o+l+a+|buenas|buenos dias|tardes|noches|hi|hello)$"
+                ]
+            },
+            {
+                "name": "closing",
+                "patterns": [
+                    "^(chau|adios|gracias|ok|listo)$"
+                ]
+            },
+            {
+                "name": "faq_pricing",
+                "patterns": [
+                    "(precio|costo|cuanto sale|planes|tarifas)"
+                ]
+            },
+            {
+                "name": "faq_schedule",
+                "patterns": [
+                    "(horario|dias|agenda|turno)"
+                ]
+            },
+            {
+                "name": "faq_product_info",
+                "patterns": [
+                    "(que es|como funciona|info|informacion)"
+                ]
+            },
+            {
+                "name": "confirmation_yes",
+                "patterns": [
+                    "^(si|claro|correcto|dale)$"
+                ]
+            },
+            {
+                "name": "confirmation_no",
+                "patterns": [
+                    "^(no|nunca|jamas)$"
+                ]
+            },
+            {
+                "name": "system_command",
+                "patterns": [
+                    "^(salir|menu|inicio)$"
+                ]
+            }
+        ],
+        "transactional": [
+            {
+                "name": "lead_capture",
+                "patterns": [
+                    "(contacto|llamanos|mail|correo)"
+                ]
+            },
+            {
+                "name": "slot_filling",
+                "patterns": [],
+                "condition": "missing_slots_present"
+            }
+        ],
+        "conversational": [
+            {
+                "name": "explanation_request",
+                "patterns": [
+                    "(explicame|por que|diferencia)"
+                ]
+            },
+            {
+                "name": "product_comparison",
+                "patterns": [
+                    "(comparar|vs|mejor que)"
+                ]
+            }
+        ],
+        "critical": [
+            {
+                "name": "ats_evaluation",
+                "patterns": [
+                    "(evaluacion|candidato|perfil|liderazgo|soft skills)"
+                ]
+            },
+            {
+                "name": "legal_or_health",
+                "patterns": [
+                    "(legal|contrato|salud|medico|denuncia)"
+                ]
+            }
+        ]
+    },
+    "product_rules": {
+        "ats": {
+            "min_category_if_not_static": "conversational",
+            "risk_modifier": 20
+        },
+        "alex": {
+            "risk_modifier": 0
+        },
+        "talkme": {
+            "risk_modifier": 0
+        }
+    },
+    "channel_rules": {
+        "voice": {
+            "risk_modifier": 20,
+            "force_timeout_ms": 2000
+        },
+        "whatsapp": {
+            "risk_modifier": 0
+        },
+        "web": {
+            "risk_modifier": 0
+        }
+    },
+    "routing_table": {
+        "static": "ANTIGRAVITY",
+        "transactional": "ANTIGRAVITY",
+        "conversational": "DEEPSEEK",
+        "critical": "DEEPSEEK_THEN_GPT5"
+    }
+}
